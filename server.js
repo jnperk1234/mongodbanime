@@ -4,10 +4,14 @@ var bodyParser= require('body-parser');
 var mongoose =  require ('mongoose');
 var request =require ('request');
 var cheerio = require ('cheerio')
-var logger = ('morgan');
+//var logger = ('morgan');
+var exphbs = require('express-handlebars');
+
+app.engine('handlebars', exphbs({ defualtLayout: "main"}))
+app.set("view engine", 'handlebars')
 
 var Article = require ("./models/Article.js");
-var Note = require ('./models/Note.js');
+//var Note = require ('./models/Note.js');
 
 mongoose.Promise = Promise;
 
@@ -15,14 +19,14 @@ var app = express();
 
 var PORT = process.env.PORT || 3000;
 
-app.use(logger("dev"));
+//app.use(logger("dev"));
 app.use(bodyParser.urlencoded({
         extended: false
 }));
 
-app.use(express.static("public"));
+//app.use(express.static("public"));
 
-mongoose.connect('mongodb://localhost/mongoosescraper');
+mongoose.connect('mongodb://newuser1234:newuser1234@ds259620.mlab.com:59620/kotakuscrapper');
 var db = mongoose.connection;
 
 db.on("error", function(error){
@@ -34,30 +38,34 @@ db.once("open", function(){
 });
 
 //Routes
+app.get('/', function(req, res){
+    res.render("index")
+})
 
 //GET request to scrape echojs
-app.get("/scrape", function(request, result){
+app.get("/scrape", function(req, res){
     //Grab html body
     request("https://kotaku.com/", function(error, response, html){
-        var $ = cheerio.load(html);
-    $("ul.headlineStack_list li").each(function(i, element){
-        var result = {};
-    result.title = $(this).children("a").text();
-    result.link = $(this).children("a").attr("href");
+    //     var $ = cheerio.load(html);
+    // $("ul.headlineStack_list li").each(function(i, element){
+    //     var result = {};
+    // result.title = $(this).children("a").text();
+    // result.link = $(this).children("a").attr("href");
 
-    var entry = new Article(result);
-    entry.save(function(err, doc){
-        if (err) {
-            console.log(err);
-        }else{
-            console.log(doc);
-        }
+    // var entry = new Article(result);
+    // entry.save(function(err, doc){
+    //     if (err) {
+    //         console.log(err);
+    //     }else{
+    //         console.log(doc);
+    //     }
 
-            });
-        });
+    //         });
+    //     });
+    res.send(html);
     });
 
-    res.send("Scrape Complete");
+   
 });
 
 app.get("/articles", function(req, res){
@@ -83,7 +91,7 @@ app.get("/articles/:id", function(req, res){
     });
 });
 
-app.POST("/articles/:id", function(req, res){
+app.post("/articles/:id", function(req, res){
     var newNote = new Note(req.body);
     newNote.save(function(error){
         if(error) {
@@ -100,3 +108,5 @@ app.POST("/articles/:id", function(req, res){
         }
     });
 });
+
+app.listen(PORT);
